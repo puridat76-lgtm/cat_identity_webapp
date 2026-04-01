@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="page-head">
+    <p class="page-kicker">Train</p>
+    <h1>Realtime Train</h1>
+    <p class="page-copy">กด Train เมื่อ dataset เปลี่ยน แล้วดู progress แบบสดจากหน้านี้</p>
+  </section>
+
+  <section class="train-layout">
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="section-kicker">Index</p>
+          <h2>สถานะงาน</h2>
+        </div>
+
+        <div class="toolbar">
+          <button id="trainActionBtn" class="btn primary" type="button">Train</button>
+          <button id="trainRefreshBtn" class="btn ghost" type="button">รีเฟรช</button>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <article class="metric-card accent">
+          <span>status</span>
+          <strong id="trainStatusText">idle</strong>
+          <p id="trainStageText">รอเริ่ม</p>
+          <div class="progress-track"><div id="trainProgressFill"></div></div>
+        </article>
+
+        <article class="metric-card">
+          <span>processed</span>
+          <strong id="trainProcessedText">0 / 0</strong>
+          <p id="trainValidText">valid 0</p>
+        </article>
+
+        <article class="metric-card">
+          <span>elapsed</span>
+          <strong id="trainElapsedText">0.0s</strong>
+          <p id="trainCurrentText">-</p>
+        </article>
+      </div>
+
+      <div id="trainMessage" class="message hidden"></div>
+    </section>
+
+    <section class="panel chart-panel">
+      <div class="panel-head compact">
+        <div>
+          <p class="section-kicker">Progress</p>
+          <h2>กราฟการประมวลผล</h2>
+        </div>
+        <strong id="trainPercentText" class="chart-number">0%</strong>
+      </div>
+
+      <svg class="line-chart" viewBox="0 0 600 240" preserveAspectRatio="none" aria-hidden="true">
+        <path id="trainAreaPath" class="line-area" d=""></path>
+        <polyline id="trainLinePath" class="line-path" points=""></polyline>
+        <circle id="trainLineDot" class="line-dot" cx="0" cy="0" r="5"></circle>
+      </svg>
+
+      <div class="chart-meta">
+        <span>start</span>
+        <span id="trainChartMaxLabel">0 images</span>
+      </div>
+    </section>
+
+    <section class="panel chart-panel">
+      <div class="panel-head compact">
+        <div>
+          <p class="section-kicker">Split</p>
+          <h2>ความคืบหน้ารายคลาส</h2>
+        </div>
+        <strong id="trainSplitSummary" class="chart-number">0 / 0 / 0</strong>
+      </div>
+
+      <div class="split-list">
+        <div class="split-item">
+          <span>Cats</span>
+          <div class="split-track"><div id="trainGalleryBar" class="split-fill gallery"></div></div>
+          <strong id="trainGalleryText">0</strong>
+        </div>
+        <div class="split-item">
+          <span>Not cat</span>
+          <div class="split-track"><div id="trainNotCatBar" class="split-fill not-cat"></div></div>
+          <strong id="trainNotCatText">0</strong>
+        </div>
+        <div class="split-item">
+          <span>Unknown</span>
+          <div class="split-track"><div id="trainUnknownBar" class="split-fill unknown"></div></div>
+          <strong id="trainUnknownText">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head compact">
+        <div>
+          <p class="section-kicker">Timeline</p>
+          <h2>ล่าสุด</h2>
+        </div>
+      </div>
+      <div id="trainTimeline" class="timeline-grid"></div>
+    </section>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/train.js') }}"></script>
+{% endblock %}

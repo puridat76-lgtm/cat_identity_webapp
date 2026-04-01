@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="page-head">
+    <p class="page-kicker">Reference</p>
+    <h1>{{ page_heading }}</h1>
+    <p class="page-copy">{{ page_copy }}</p>
+  </section>
+
+  <section id="referencePage" class="panel reference-page" data-reference-key="{{ reference_key }}">
+    <div class="panel-head">
+      <div>
+        <p class="section-kicker">Class</p>
+        <h2 id="referenceTitle">{{ page_heading }}</h2>
+      </div>
+
+      <label class="btn soft upload-inline" for="referenceInput">
+        <input id="referenceInput" type="file" accept="image/*" multiple />
+        เพิ่มรูป
+      </label>
+    </div>
+
+    <div class="reference-hero">
+      <article class="hero-stat">
+        <span>images</span>
+        <strong id="referenceCount">0</strong>
+      </article>
+      <article class="hero-stat">
+        <span>index</span>
+        <strong id="referenceIndexState">-</strong>
+      </article>
+    </div>
+
+    <p id="referenceMessage" class="message hidden"></p>
+
+    <section class="sub-panel">
+      <div class="sub-head">
+        <span>รูปในคลาส</span>
+        <div class="sub-head-actions">
+          <strong id="referenceVisibleCount" class="sub-head-count">0 รูป</strong>
+          <button id="referenceLoadMoreBtn" class="count-pill hidden" type="button"></button>
+        </div>
+      </div>
+      <div id="referenceGrid" class="thumb-grid large"></div>
+      <div id="referenceEmpty" class="empty-card hidden">ยังไม่มีรูป</div>
+    </section>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/reference.js') }}"></script>
+{% endblock %}

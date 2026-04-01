@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="page-head">
+    <p class="page-kicker">Predict</p>
+    <h1>Predict</h1>
+    <p class="page-copy">อัปโหลดรูปหรือใช้กล้อง แล้วดูผลการทำนายจากหน้านี้</p>
+  </section>
+
+  <section class="page-grid predict-grid">
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="section-kicker">Input</p>
+          <h2>รูปเข้า</h2>
+        </div>
+
+        <div class="tab-row" role="tablist">
+          <button class="tab-pill active" data-tab="upload" type="button">อัปโหลด</button>
+          <button class="tab-pill" data-tab="camera" type="button">กล้อง</button>
+        </div>
+      </div>
+
+      <div class="tab-panel active" id="tab-upload">
+        <label class="upload-box large" for="fileInput">
+          <input id="fileInput" type="file" accept="image/*" />
+          <strong>เลือกรูป</strong>
+          <span>JPG PNG WEBP</span>
+        </label>
+      </div>
+
+      <div class="tab-panel" id="tab-camera">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="toolbar">
+          <button id="startCameraBtn" class="btn soft" type="button">เปิดกล้อง</button>
+          <button id="captureBtn" class="btn ghost" type="button">จับภาพ</button>
+        </div>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+      </div>
+
+      <div class="preview-box">
+        <img id="preview" alt="Preview" />
+        <span id="fileName">ยังไม่มีรูป</span>
+      </div>
+
+      <button id="predictBtn" class="btn primary wide" type="button" disabled>ทำนาย</button>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head compact">
+        <div>
+          <p class="section-kicker">Result</p>
+          <h2 id="finalLabel">-</h2>
+        </div>
+        <strong id="scorePill" class="score-chip">score -</strong>
+      </div>
+
+      <div id="resultState" class="empty-card">พร้อม</div>
+
+      <div id="resultBox" class="hidden">
+        <div class="result-metrics">
+          <article><span>best</span><strong id="bestKnown">-</strong></article>
+          <article><span>2nd</span><strong id="secondScore">-</strong></article>
+          <article><span>unknown</span><strong id="unknownScore">-</strong></article>
+          <article><span>not cat</span><strong id="notCatScore">-</strong></article>
+          <article><span>blur</span><strong id="blurScore">-</strong></article>
+          <article><span>light</span><strong id="brightness">-</strong></article>
+        </div>
+
+        <ul id="topMatches" class="match-list"></ul>
+        <p id="qualityNotes" class="inline-note">-</p>
+      </div>
+    </section>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/predict.js') }}"></script>
+{% endblock %}

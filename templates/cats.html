@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="page-head">
+    <p class="page-kicker">Dataset</p>
+    <h1>รายชื่อแมว</h1>
+    <p class="page-copy">หน้าแก้ไขข้อมูลแมวหลักของระบบ</p>
+  </section>
+
+  <section class="page-grid cats-grid">
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="section-kicker">Dataset</p>
+          <h2>รายการทั้งหมด</h2>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box">
+            <input id="searchInput" type="search" placeholder="ค้นหา" />
+          </label>
+          <button id="newCatBtn" class="btn soft" type="button">+ ใหม่</button>
+        </div>
+      </div>
+
+      <div id="catSummaryText" class="inline-note">0 ตัว</div>
+      <div id="catList" class="card-stack"></div>
+      <div id="catsEmpty" class="empty-card hidden">ยังไม่มีข้อมูลแมว</div>
+    </section>
+
+    <aside class="panel form-panel">
+      <form id="catForm" class="editor-form">
+        <div class="panel-head compact">
+          <div>
+            <p id="formModeLabel" class="section-kicker">เพิ่ม</p>
+            <h2 id="formTitle">รายการใหม่</h2>
+          </div>
+
+          <button id="resetFormBtn" class="btn ghost" type="button">ล้าง</button>
+        </div>
+
+        <input id="catIdInput" type="hidden" />
+
+        <label class="field">
+          <span>ชื่อแมว</span>
+          <input id="nameInput" name="name" type="text" placeholder="เช่น Haha" />
+        </label>
+
+        <label class="field">
+          <span>เจ้าของ</span>
+          <input id="ownerInput" name="owner" type="text" placeholder="ชื่อเจ้าของ" />
+        </label>
+
+        <label class="field">
+          <span>ที่อยู่</span>
+          <input id="locationInput" name="location" type="text" placeholder="บ้าน / ห้อง / จุดสังเกต" />
+        </label>
+
+        <label class="upload-box" for="imagesInput">
+          <input id="imagesInput" name="images" type="file" accept="image/*" multiple />
+          <strong>เพิ่มรูป</strong>
+          <span id="imagesHint">0 ไฟล์</span>
+        </label>
+
+        <section class="sub-panel">
+          <div class="sub-head">
+            <span>รูปในชุดข้อมูล</span>
+            <strong id="existingImageCount">0</strong>
+          </div>
+          <div id="imageGrid" class="thumb-grid"></div>
+        </section>
+
+        <p id="formMessage" class="message hidden"></p>
+
+        <div class="form-actions">
+          <button id="saveCatBtn" class="btn primary" type="submit">บันทึก</button>
+          <button id="deleteCatBtn" class="btn danger hidden" type="button">ลบ</button>
+        </div>
+      </form>
+    </aside>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/cats.js') }}"></script>
+{% endblock %}

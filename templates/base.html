@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ page_title }} | Cat Identity</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('index') }}">Cat Identity</a>
+
+      <nav class="main-nav" aria-label="Primary">
+        <a class="nav-pill{% if active_page == 'cats' %} active{% endif %}" href="{{ url_for('cats') }}">Cats</a>
+        <a class="nav-pill{% if active_page == 'not_cat' %} active{% endif %}" href="{{ url_for('not_cat_page') }}">Not cat</a>
+        <a class="nav-pill{% if active_page == 'unknown_cat' %} active{% endif %}" href="{{ url_for('unknown_cat_page') }}">Unknown_cat</a>
+        <a class="nav-pill{% if active_page == 'train' %} active{% endif %}" href="{{ url_for('train_page') }}">Train</a>
+        <a class="nav-pill{% if active_page == 'predict' %} active{% endif %}" href="{{ url_for('predict_page') }}">Predict</a>
+      </nav>
+
+      <div id="globalStatusBadge" class="status-chip">Loading...</div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

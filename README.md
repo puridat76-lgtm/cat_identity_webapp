@@ -50,13 +50,12 @@ cat_identity_webapp/
 
 ## 2) ฟีเจอร์ในเว็บ
 
-- อัปโหลดรูปจากเครื่อง
-- เปิดกล้องแล้วจับภาพ
-- ปุ่ม `Rebuild gallery` เพื่ออ่าน dataset ใหม่
-- แสดงผลลัพธ์ final label
-- แสดงคะแนนเทียบกับ known / unknown / not_cat
-- แสดง quality check เบื้องต้น
-- UI มินิมอล เรียบง่าย ใช้งานคล้ายหน้า Teachable Machine
+- หน้า `Cats` สำหรับเพิ่ม / ลบ / แก้ไข dataset หลัก
+- หน้า `Not cat` และ `Unknown_cat` สำหรับจัดการ reference classes
+- หน้า `Train` สำหรับ rebuild index พร้อมดู progress แบบ realtime
+- หน้า `Predict` สำหรับอัปโหลดรูปหรือใช้กล้องแล้วทำนาย
+- แสดงผลลัพธ์ final label และคะแนนเทียบกับ known / unknown / not_cat
+- UI มินิมอล แยกหน้า ใช้งานง่าย
 
 ---
 
@@ -99,7 +98,7 @@ python app.py
 
 จากนั้นเปิดเบราว์เซอร์ไปที่:
 ```text
-http://127.0.0.1:5000
+http://127.0.0.1:5001
 ```
 
 ---
@@ -107,17 +106,17 @@ http://127.0.0.1:5000
 ## 5) วิธีใช้งาน
 
 ### แบบ Upload
-1. กด `Select image`
+1. กด `เลือกรูป`
 2. เลือกรูป
 3. กด `Predict`
 
 ### แบบ Camera
-1. กด `Start camera`
-2. กด `Capture frame`
+1. กด `เปิดกล้อง`
+2. กด `จับภาพ`
 3. กด `Predict`
 
 ### ถ้าเพิ่งเพิ่ม dataset ใหม่
-1. กด `Rebuild gallery`
+1. ไปหน้า `Train`
 2. รอให้ระบบอ่านรูปใหม่
 3. ค่อยทำนายอีกครั้ง
 
@@ -152,9 +151,17 @@ services/quality.py        # ตรวจคุณภาพรูป
 services/decision.py       # ตัดสินผลลัพธ์
 services/pipeline.py       # รวม flow ทั้งหมด
 scripts/build_index.py     # rebuild index จาก dataset
-templates/index.html       # หน้าเว็บ
+templates/base.html        # layout กลาง
+templates/cats.html        # หน้า dataset แมว
+templates/reference.html   # หน้า not_cat / unknown_cat
+templates/train.html       # หน้า train
+templates/predict.html     # หน้า predict
 static/css/style.css       # สไตล์
-static/js/app.js           # ฝั่ง frontend
+static/js/common.js        # logic กลาง
+static/js/cats.js          # หน้า dataset แมว
+static/js/reference.js     # หน้า reference classes
+static/js/train.js         # หน้า train
+static/js/predict.js       # หน้า predict
 ```
 
 ---
@@ -169,10 +176,34 @@ pytest -q
 
 ไฟล์ทดสอบจะเช็กหลัก ๆ ดังนี้:
 - เปิด `/api/status` ได้
-- rebuild gallery ได้
+- start train และดู status ได้
 - predict known label ได้
 - predict `not_cat` ได้
 - predict `low_quality` ได้
+
+---
+
+## 12) Deploy ขึ้นเว็บจริง
+
+ถ้าจะ deploy แบบเว็บจริงผ่าน GitHub + Gunicorn:
+
+```bash
+gunicorn --bind 0.0.0.0:$PORT wsgi:app
+```
+
+จุดสำคัญ:
+- โปรเจกต์นี้เขียนไฟล์ลง `data/` ตอนอัปโหลดรูปและตอน Train
+- ถ้า deploy บนเครื่องที่ filesystem ชั่วคราว ข้อมูลที่อัปโหลดจากหน้าเว็บอาจหายหลัง restart หรือ redeploy
+- ตอนนี้แอปรองรับ environment variable เพื่อย้ายตำแหน่งเก็บข้อมูลได้แล้ว เช่น `DATA_DIR=/var/data`
+
+ตัวแปรที่รองรับ:
+- `DATA_DIR`
+- `INDEX_DIR`
+- `GALLERY_DIR`
+- `NOT_CAT_DIR`
+- `UNKNOWN_CAT_DIR`
+- `CATS_META_PATH`
+- `PORT`
 
 ---
 
@@ -201,4 +232,3 @@ pytest -q
 ## 11) หมายเหตุสำคัญ
 
 ถ้ายังไม่ใส่รูปใน `data/gallery/` แล้วกด predict ระบบจะฟ้องว่า gallery ว่าง ซึ่งเป็นพฤติกรรมปกติ
-
