@@ -1,7 +1,8 @@
 .venv/
 __pycache__/
-**/__pycache__/
+services/__pycache__/
+tests/__pycache__/
 *.pyc
-.DS_Store
 .pytest_cache/
+.DS_Store
 data/index/
