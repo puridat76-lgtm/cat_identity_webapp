@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import time
 from pathlib import Path
 
@@ -53,6 +54,28 @@ def make_app(data_dir: Path):
             'CATS_META_PATH': data_dir / 'cats.json',
         }
     )
+
+
+def wait_for_train(client, attempts: int = 40) -> dict:
+    final_job = None
+    for _ in range(attempts):
+        status_response = client.get('/api/train/status')
+        assert status_response.status_code == 200
+        final_job = status_response.get_json()['job']
+        if final_job['status'] in {'completed', 'failed'}:
+            break
+        time.sleep(0.05)
+    assert final_job is not None
+    return final_job
+
+
+def start_and_wait_train(client) -> dict:
+    start_response = client.post('/api/train')
+    assert start_response.status_code == 202
+    payload = start_response.get_json()
+    assert payload['started'] is True
+    assert payload['job']['status'] == 'running'
+    return wait_for_train(client)
 
 
 def test_status_and_rebuild_and_predict(tmp_path):
@@ -242,22 +265,93 @@ def test_train_job_status_endpoint(tmp_path):
     app = make_app(data_dir)
     client = app.test_client()
 
-    start_response = client.post('/api/train')
-    assert start_response.status_code == 202
-    payload = start_response.get_json()
-    assert payload['started'] is True
-    assert payload['job']['status'] == 'running'
-
-    final_job = None
-    for _ in range(40):
-        status_response = client.get('/api/train/status')
-        assert status_response.status_code == 200
-        final_job = status_response.get_json()['job']
-        if final_job['status'] in {'completed', 'failed'}:
-            break
-        time.sleep(0.05)
-
-    assert final_job is not None
+    final_job = start_and_wait_train(client)
     assert final_job['status'] == 'completed'
     assert final_job['processed_images'] == 4
     assert final_job['summary']['index_status'] == 'ready'
+
+
+def test_incremental_train_skips_unchanged_and_processes_only_new_file(tmp_path):
+    data_dir = tmp_path / 'data'
+    setup_dataset(data_dir)
+    app = make_app(data_dir)
+    client = app.test_client()
+
+    initial_job = start_and_wait_train(client)
+    assert initial_job['processed_images'] == 4
+
+    no_change_job = start_and_wait_train(client)
+    assert no_change_job['status'] == 'completed'
+    assert no_change_job['processed_images'] == 0
+    assert no_change_job['valid_images'] == 4
+
+    save_image(
+        data_dir / 'gallery' / 'Haha' / 'haha_2.png',
+        make_pattern_image((122, 122, 122), (180, 180, 180), mode='cat'),
+    )
+    incremental_job = start_and_wait_train(client)
+    assert incremental_job['status'] == 'completed'
+    assert incremental_job['processed_images'] == 1
+    assert incremental_job['valid_images'] == 5
+    assert incremental_job['summary']['gallery_images'] == 3
+    assert incremental_job['summary']['index_status'] == 'ready'
+
+
+def test_incremental_train_reuses_vectors_for_rename_and_delete(tmp_path):
+    data_dir = tmp_path / 'data'
+    setup_dataset(data_dir)
+    app = make_app(data_dir)
+    client = app.test_client()
+
+    start_and_wait_train(client)
+
+    cats = client.get('/api/cats').get_json()['cats']
+    haha = next(cat for cat in cats if cat['name'] == 'Haha')
+
+    rename_response = client.put(
+        f"/api/cats/{haha['id']}",
+        data={'name': 'Haha Prime', 'owner': '', 'location': ''},
+        content_type='multipart/form-data',
+    )
+    assert rename_response.status_code == 200
+
+    rename_job = start_and_wait_train(client)
+    assert rename_job['status'] == 'completed'
+    assert rename_job['processed_images'] == 1
+    assert 'Haha Prime' in rename_job['summary']['known_labels']
+    assert 'Haha' not in rename_job['summary']['known_labels']
+
+    updated_cat = rename_response.get_json()['cat']
+    image_name = updated_cat['images'][0]['name']
+    delete_response = client.delete(f"/api/cats/{updated_cat['id']}/images/{image_name}")
+    assert delete_response.status_code == 200
+
+    delete_job = start_and_wait_train(client)
+    assert delete_job['status'] == 'completed'
+    assert delete_job['processed_images'] == 1
+    assert delete_job['summary']['gallery_images'] == 1
+    assert delete_job['summary']['known_labels'] == ['Loki']
+
+
+def test_incremental_train_falls_back_to_full_rebuild_when_saved_state_is_legacy(tmp_path):
+    data_dir = tmp_path / 'data'
+    setup_dataset(data_dir)
+    app = make_app(data_dir)
+    client = app.test_client()
+
+    start_and_wait_train(client)
+
+    manifest_path = data_dir / 'index' / 'gallery_manifest.json'
+    with open(manifest_path, 'r', encoding='utf-8') as file:
+        manifest_payload = json.load(file)
+    manifest_payload.pop('indexed_files', None)
+    manifest_payload['version'] = 1
+    with open(manifest_path, 'w', encoding='utf-8') as file:
+        json.dump(manifest_payload, file, ensure_ascii=False, indent=2)
+
+    reloaded_app = make_app(data_dir)
+    reloaded_client = reloaded_app.test_client()
+    fallback_job = start_and_wait_train(reloaded_client)
+    assert fallback_job['status'] == 'completed'
+    assert fallback_job['processed_images'] == 4
+    assert fallback_job['summary']['index_status'] == 'ready'

@@ -22,6 +22,10 @@ class FeatureExtractor:
     def __init__(self, image_size: int = 128):
         self.image_size = image_size
 
+    @property
+    def signature(self) -> str:
+        return f'feature-extractor:v1:image_size={self.image_size}'
+
     def extract(self, image: Image.Image) -> FeatureOutput:
         rgb = pil_to_rgb_array(image)
         resized = cv2.resize(rgb, (self.image_size, self.image_size), interpolation=cv2.INTER_AREA)

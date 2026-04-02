@@ -38,7 +38,9 @@ function formatStage(stage) {
   const stageMap = {
     idle: 'รอเริ่ม',
     prepare: 'กำลังเตรียมรายการรูป',
+    sync: 'กำลังซิงก์ไฟล์ที่เปลี่ยน',
     extract: 'กำลังสร้างเวกเตอร์',
+    remove: 'กำลังล้างรายการที่ถูกลบ',
     save: 'กำลังบันทึก index',
     completed: 'เสร็จแล้ว',
     failed: 'เกิดข้อผิดพลาด',
