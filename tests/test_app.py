@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import sqlite3
 import time
 from pathlib import Path
 
@@ -279,8 +280,11 @@ def test_incremental_train_skips_unchanged_and_processes_only_new_file(tmp_path)
 
     initial_job = start_and_wait_train(client)
     assert initial_job['processed_images'] == 4
+    assert (data_dir / 'index' / 'gallery_index.sqlite3').exists()
 
-    no_change_job = start_and_wait_train(client)
+    reloaded_app = make_app(data_dir)
+    reloaded_client = reloaded_app.test_client()
+    no_change_job = start_and_wait_train(reloaded_client)
     assert no_change_job['status'] == 'completed'
     assert no_change_job['processed_images'] == 0
     assert no_change_job['valid_images'] == 4
@@ -289,7 +293,7 @@ def test_incremental_train_skips_unchanged_and_processes_only_new_file(tmp_path)
         data_dir / 'gallery' / 'Haha' / 'haha_2.png',
         make_pattern_image((122, 122, 122), (180, 180, 180), mode='cat'),
     )
-    incremental_job = start_and_wait_train(client)
+    incremental_job = start_and_wait_train(reloaded_client)
     assert incremental_job['status'] == 'completed'
     assert incremental_job['processed_images'] == 1
     assert incremental_job['valid_images'] == 5
@@ -341,13 +345,10 @@ def test_incremental_train_falls_back_to_full_rebuild_when_saved_state_is_legacy
 
     start_and_wait_train(client)
 
-    manifest_path = data_dir / 'index' / 'gallery_manifest.json'
-    with open(manifest_path, 'r', encoding='utf-8') as file:
-        manifest_payload = json.load(file)
-    manifest_payload.pop('indexed_files', None)
-    manifest_payload['version'] = 1
-    with open(manifest_path, 'w', encoding='utf-8') as file:
-        json.dump(manifest_payload, file, ensure_ascii=False, indent=2)
+    sqlite_path = data_dir / 'index' / 'gallery_index.sqlite3'
+    with sqlite3.connect(sqlite_path) as conn:
+        conn.execute("UPDATE meta SET value = '1' WHERE key = 'version'")
+        conn.commit()
 
     reloaded_app = make_app(data_dir)
     reloaded_client = reloaded_app.test_client()
