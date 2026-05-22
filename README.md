@@ -42,6 +42,13 @@ http://127.0.0.1:5500
 
 การเปิด `index.html` ผ่าน Live Server หรือ `python3 -m http.server` ใช้ได้เฉพาะโหมด frontend/TensorFlow.js เท่านั้น และจะรัน `.h5` ไม่ได้
 
+## Deploy
+
+Vercel ใช้สำหรับ deploy frontend/static web ได้ แต่ไม่เหมาะกับ backend TensorFlow `.h5` เพราะ dependency ของ TensorFlow มีขนาดใหญ่เกิน Vercel Serverless Function limit
+
+- Deploy บน Vercel: ใช้ส่วน frontend, dataset UI, TensorFlow.js model, MobileNet fallback
+- ใช้ `.h5/.keras`: รัน `server.py` บนเครื่อง/server ที่ติดตั้ง TensorFlow ได้ เช่น Render, Railway, VM หรือ local server
+
 ## หมายเหตุ
 
 คะแนน similarity ตอนนี้คำนวณจากภาพจริงแล้ว ภาพสองฝั่งผ่าน encoder เดียวกันแล้วคำนวณ cosine similarity ตามแนว Siamese Network
