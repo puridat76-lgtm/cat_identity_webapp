@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SNN Workflow Demo | Custom Input</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Cat Identity • Siamese Neural Network</p>
+          <h1>ระบบการทำงานของ SNN สำหรับเปรียบเทียบรูปภาพ</h1>
+          <p class="subtitle">
+            อัปโหลดรูปของคุณเอง → จัดเข้าคลาส → เลือกคู่ภาพ → ดูผล Positive / Negative และ Threshold
+          </p>
+        </div>
+        <div class="model-card" id="modelStatusCard">
+          <span class="status-dot"></span>
+          <div>
+            <p class="muted">โมเดลที่ใช้อยู่</p>
+            <strong id="currentModelName">กำลังโหลดโมเดล...</strong>
+            <small id="currentModelDetail">เตรียมระบบ embedding</small>
+          </div>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="เมนูหลัก">
+        <button class="tab active" data-panel="inputPanel">Input Dataset</button>
+        <button class="tab" data-panel="workflowPanel">Animation Flow</button>
+        <button class="tab" data-panel="pairPanel">Pair Generator</button>
+        <button class="tab" data-panel="modelPanel">Model Manager</button>
+      </nav>
+
+      <main>
+        <section id="inputPanel" class="panel active">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Step 1</p>
+              <h2>ใส่ Input Dataset ของคุณเอง</h2>
+              <p>ใส่ชื่อคลาส เช่น A, B, C หรือชื่อแมว แล้วอัปโหลดรูปเข้าแต่ละคลาสได้เลย</p>
+            </div>
+            <div class="button-row">
+              <button id="addClassBtn" class="primary-btn">+ เพิ่มคลาส</button>
+              <button id="loadDemoBtn" class="ghost-btn">โหลดตัวอย่าง Demo</button>
+              <button id="clearDatasetBtn" class="danger-btn">ล้างรูปทั้งหมด</button>
+            </div>
+          </div>
+
+          <div class="dataset-layout">
+            <aside class="upload-card">
+              <h3>เพิ่มรูปเข้า Class</h3>
+              <label>
+                ชื่อ Class
+                <input id="classNameInput" type="text" placeholder="เช่น A หรือ Loki" value="A" />
+              </label>
+              <label class="upload-box" for="imageUpload">
+                <span>🖼️</span>
+                <strong>เลือกรูปภาพ</strong>
+                <small>อัปโหลดได้หลายรูปพร้อมกัน (.jpg, .png, .webp, .gif)</small>
+                <input id="imageUpload" type="file" accept="image/*" multiple hidden />
+              </label>
+              <label class="upload-box folder-upload" for="folderUpload">
+                <span>📁</span>
+                <strong>เลือกทั้งโฟลเดอร์</strong>
+                <small>ถ้ามีโฟลเดอร์ย่อย ระบบจะใช้ชื่อโฟลเดอร์ย่อยเป็น Class</small>
+                <input id="folderUpload" type="file" accept="image/*" webkitdirectory directory multiple hidden />
+              </label>
+
+              <div class="input-help">
+                <strong>วิธีใช้เร็ว ๆ</strong>
+                <ol>
+                  <li>พิมพ์ชื่อ Class เช่น A</li>
+                  <li>อัปโหลดรูปของ Class A</li>
+                  <li>เปลี่ยนชื่อเป็น B แล้วอัปโหลดรูปของ Class B</li>
+                  <li>หรือเลือกทั้งโฟลเดอร์ โดยตั้งโฟลเดอร์ย่อยเป็นชื่อ Class ได้</li>
+                </ol>
+              </div>
+            </aside>
+
+            <section class="dataset-board full">
+              <div class="dataset-topline">
+                <div>
+                  <h2>ชุดข้อมูลปัจจุบัน</h2>
+                  <p id="datasetSummary">ยังไม่มีรูป</p>
+                </div>
+                <div class="pill-row">
+                  <span class="pill green">Positive = class เดียวกัน</span>
+                  <span class="pill red">Negative = คนละ class</span>
+                </div>
+              </div>
+              <div id="customClassGrid" class="custom-class-grid"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="workflowPanel" class="panel">
+          <div class="control-bar">
+            <button id="playBtn" class="primary-btn">▶ เล่น Animation</button>
+            <button id="resetBtn" class="ghost-btn">↺ เริ่มใหม่</button>
+            <label class="threshold-control">
+              Threshold (T)
+              <input id="thresholdSlider" type="range" min="0" max="1" step="0.001" value="0.5" />
+              <input id="thresholdInput" class="threshold-input" type="number" min="0" max="1" step="0.001" value="0.5" />
+              <span id="thresholdValue">0.50</span>
+            </label>
+          </div>
+
+          <div class="workflow-grid">
+            <aside class="dataset-board">
+              <h2>1) Dataset จาก Input</h2>
+              <p>รูปที่คุณอัปโหลดจะแสดงที่นี่</p>
+              <div id="miniClassGrid" class="class-grid"></div>
+            </aside>
+
+            <section class="stage-board">
+              <div class="stage-track" id="stageTrack">
+                <article class="stage active" data-stage="0">
+                  <span class="stage-num">1</span>
+                  <h3>เลือก Anchor</h3>
+                  <div id="anchorMini" class="mini-image image-slot">A1</div>
+                  <p>รูปตั้งต้นที่ใช้เปรียบเทียบ</p>
+                </article>
+                <article class="stage" data-stage="1">
+                  <span class="stage-num">2</span>
+                  <h3>สร้างคู่ภาพ</h3>
+                  <div class="pair-preview">
+                    <span id="pairLeft" class="mini-image image-slot">A1</span>
+                    <span class="dash">—</span>
+                    <span id="pairRight" class="mini-image image-slot">A2</span>
+                  </div>
+                  <p id="pairTypeText">Positive Pair</p>
+                </article>
+                <article class="stage" data-stage="2">
+                  <span class="stage-num">3</span>
+                  <h3>เข้าโมเดล SNN</h3>
+                  <div class="tower-wrap">
+                    <div class="tower"></div>
+                    <div class="shared">แชร์น้ำหนัก</div>
+                    <div class="tower"></div>
+                  </div>
+                  <p>โครงข่ายคู่เหมือนกัน</p>
+                </article>
+                <article class="stage" data-stage="3">
+                  <span class="stage-num">4</span>
+                  <h3>Embedding</h3>
+                  <div class="vector-wrap">
+                    <div class="vector"></div>
+                    <div class="vector"></div>
+                  </div>
+                  <p>แปลงภาพเป็นเวกเตอร์</p>
+                </article>
+                <article class="stage" data-stage="4">
+                  <span class="stage-num">5</span>
+                  <h3 id="scoreStageTitle">Similarity Score</h3>
+                  <div class="score-meter">
+                    <div class="score-fill" id="scoreFill"></div>
+                    <div class="threshold-line" id="thresholdLine"></div>
+                  </div>
+                  <strong id="scoreText">Score = 0.86</strong>
+                </article>
+                <article class="stage result-stage" data-stage="5">
+                  <span class="stage-num">6</span>
+                  <h3>ตัดสินผล</h3>
+                  <div id="resultBadge" class="result-badge same">คลาสเดียวกัน</div>
+                  <p id="decisionExplain">Score ≥ T</p>
+                </article>
+              </div>
+
+              <div class="explain-card">
+                <div>
+                  <p class="muted">แนวคิดหลัก</p>
+                  <h2 id="mainExplain">Anchor ต้องใกล้ Positive และไกล Negative</h2>
+                </div>
+                <div class="legend">
+                  <span><i class="green"></i> Positive = คลาสเดียวกัน</span>
+                  <span><i class="red"></i> Negative = คนละคลาส</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="pairPanel" class="panel">
+          <div class="pair-layout">
+            <div class="pair-card">
+              <h2>Pair Generator จาก Input ของคุณ</h2>
+              <p>เลือกภาพที่ 1 และภาพที่ 2 จากรูปที่อัปโหลด ระบบจะดูว่าเป็น class เดียวกันหรือคนละ class</p>
+
+              <div class="select-grid">
+                <label>
+                  ภาพที่ 1 / Anchor
+                  <select id="leftSelect"></select>
+                </label>
+                <label>
+                  ภาพที่ 2 / Compare
+                  <select id="rightSelect"></select>
+                </label>
+              </div>
+
+              <div class="pair-buttons">
+                <button id="applySelectedPair" class="primary-btn">เปรียบเทียบคู่นี้</button>
+                <button id="randomPositive">สุ่ม Positive จาก Input</button>
+                <button id="randomNegative">สุ่ม Negative จาก Input</button>
+              </div>
+
+              <div class="note-box compact">
+                ถ้าภาพสองรูปอยู่ class เดียวกัน ระบบจะถือว่าเป็น <strong>Positive Pair</strong><br />
+                ถ้าภาพสองรูปอยู่คนละ class ระบบจะถือว่าเป็น <strong>Negative Pair</strong>
+              </div>
+            </div>
+
+            <div class="pair-card live-result">
+              <h2>ผลการเปรียบเทียบ</h2>
+              <div class="big-pair">
+                <div id="bigLeft" class="big-image image-slot">A1</div>
+                <span>VS</span>
+                <div id="bigRight" class="big-image image-slot">A2</div>
+              </div>
+              <div class="pair-meta" id="pairMeta">A1 กับ A2 • Positive Pair</div>
+              <div class="score-box">
+                <p id="bigScoreLabel">Similarity Score</p>
+                <strong id="bigScore">0.86</strong>
+              </div>
+              <div id="bigDecision" class="result-badge same">คลาสเดียวกัน</div>
+            </div>
+          </div>
+
+          <section class="pair-card batch-test-card">
+            <div class="batch-test-header">
+              <div>
+                <h2>ผลเทสทุกคู่จากรูปที่อัปโหลด</h2>
+                <p id="batchTestSummary">ยังไม่ได้รันทดสอบ</p>
+              </div>
+              <div class="batch-actions">
+                <button id="runBatchTestBtn" class="primary-btn">ทดสอบทุกคู่</button>
+                <button id="downloadBatchCsvBtn" class="ghost-btn" disabled>ดาวน์โหลด CSV</button>
+              </div>
+            </div>
+            <div class="batch-summary-grid">
+              <div class="batch-summary-card">
+                <span>คลาสเดียวกันทายถูก</span>
+                <strong id="sameCorrectText">-</strong>
+              </div>
+              <div class="batch-summary-card">
+                <span>คนละคลาสทายถูก</span>
+                <strong id="diffCorrectText">-</strong>
+              </div>
+              <div class="batch-summary-card">
+                <span>Accuracy</span>
+                <strong id="accuracyText">-</strong>
+              </div>
+            </div>
+            <div class="batch-table-wrap">
+              <table class="batch-table">
+                <thead>
+                  <tr>
+                    <th>รูปที่ 1</th>
+                    <th>รูปที่ 2</th>
+                    <th>ผลลัพธ์</th>
+                  </tr>
+                </thead>
+                <tbody id="batchTestBody">
+                  <tr>
+                    <td colspan="3" class="empty-cell">กดทดสอบทุกคู่เพื่อดูผลลัพธ์</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="modelPanel" class="panel">
+          <div class="model-layout">
+            <div class="model-manager-card">
+              <h2>อัปโหลด / เปลี่ยนโมเดล</h2>
+              <p>
+                ระบบ default ใช้ MobileNet embedding แล้วคำนวณ cosine similarity; โมเดล SNN ที่อัปโหลดจะใช้ backend หรือ TensorFlow.js ตามไฟล์ที่เลือก
+              </p>
+              <label class="upload-box" for="modelUpload">
+                <span>⬆</span>
+                <strong>อัปโหลดโมเดลใหม่</strong>
+                <small>เลือก .h5/.keras หรือ model.json พร้อม weights.bin</small>
+                <input id="modelUpload" type="file" accept=".h5,.keras,.json,.bin" multiple hidden />
+              </label>
+              <div class="button-row">
+                <button id="useDefaultBtn" class="ghost-btn">ใช้ default encoder</button>
+                <button id="clearHistoryBtn" class="danger-btn">ล้างประวัติโมเดล</button>
+              </div>
+            </div>
+
+            <div class="model-manager-card">
+              <h2>รายการโมเดล</h2>
+              <div id="modelList" class="model-list"></div>
+            </div>
+          </div>
+          <div class="note-box">
+            <strong>หมายเหตุ:</strong> ตอนนี้คะแนน similarity คำนวณจากภาพจริง ไม่ได้สุ่มเลขแล้ว ค่า default ใช้ MobileNet embedding ผ่าน TensorFlow.js เมื่อโหลดได้ และ fallback เป็น canvas embedding เมื่อออฟไลน์หรือ CDN โหลดไม่ได้ หากต้องการ production SNN ให้ train/export เป็น TensorFlow.js model แล้วผูกเข้ากับ Model Manager
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
